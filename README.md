@@ -8,6 +8,12 @@ app_port: 8000
 
 This repository provides a minimal FastAPI server to deploy your trained ViT model for retina OCT disease classification.
 
+[![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Live%20Demo-ffcc4d?logo=huggingface)](https://xtn11-pretrainedonretina.hf.space/)
+
+Live app: https://xtn11-pretrainedonretina.hf.space/
+
+Space page: https://huggingface.co/spaces/xtn11/PretrainedOnRetina
+
 ## Prepare the model
 
 After training in your notebook/script, save artifacts to a directory, for example `my-trained-vit-model/`:
@@ -161,4 +167,3 @@ MODEL_DIR=/app/my-trained-vit-model
 - Set `MODEL_DIR` to that path.
 - Expose port `8000` locally, or use platform `PORT` in cloud deployment.
 - Verify health at `/health` after deploy.
-
