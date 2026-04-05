@@ -1,0 +1,18 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.ipynb
+.venv/
+venv/
+.env
+.env.*
+*.log
+
+# Large model files should be mounted or downloaded at runtime.
+*.pt
+*.bin
+*.safetensors
+my-trained-vit-model/
