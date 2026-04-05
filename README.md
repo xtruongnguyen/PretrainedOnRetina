@@ -21,7 +21,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Run the API
+## Run locally
 
 ```bash
 set MODEL_DIR=my-trained-vit-model  # Windows
@@ -59,4 +59,53 @@ Sample JSON response:
 ## Notes
 - The server reads `MODEL_DIR` env var; defaults to `my-trained-vit-model` in the repo root.
 - CPU inference by default. If you want GPU, move tensors to CUDA and ensure PyTorch with CUDA is installed.
+
+## Deploy
+
+This repo now includes:
+- `Dockerfile` for container deployment
+- `.dockerignore` to keep images smaller
+- `Procfile` for PaaS platforms that use process files
+
+### Option A: Deploy with Docker
+
+Build the image:
+
+```bash
+docker build -t retina-api .
+```
+
+Run with a mounted model directory:
+
+```bash
+docker run --rm -p 8000:8000 \
+  -e MODEL_DIR=/models/my-trained-vit-model \
+  -v $(pwd)/my-trained-vit-model:/models/my-trained-vit-model:ro \
+  retina-api
+```
+
+PowerShell volume example:
+
+```powershell
+docker run --rm -p 8000:8000 -e MODEL_DIR=/models/my-trained-vit-model -v ${PWD}\my-trained-vit-model:/models/my-trained-vit-model:ro retina-api
+```
+
+### Option B: Deploy to PaaS (Render/Railway/Heroku-like)
+
+Use these environment variables:
+- `MODEL_DIR` (required): absolute or app-relative path to model artifacts
+- `PORT` (provided by most platforms)
+
+Start command (already in `Procfile`):
+
+```text
+web: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+```
+
+### Deployment checklist
+
+- Upload or mount your trained model directory so the API can read it.
+- Set `MODEL_DIR` to that path.
+- Expose port `8000` locally, or use platform `PORT` in cloud deployment.
+- Verify health at `/health` after deploy.
 
