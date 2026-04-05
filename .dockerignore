@@ -11,8 +11,4 @@ venv/
 .env.*
 *.log
 
-# Large model files should be mounted or downloaded at runtime.
-*.pt
-*.bin
-*.safetensors
-my-trained-vit-model/
+# Keep trained model artifacts in build context for Hugging Face Spaces deployment.
