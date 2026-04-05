@@ -1,3 +1,9 @@
+---
+title: PretrainedOnRetina
+sdk: docker
+app_port: 8000
+---
+
 # Retina Disease Classification – FastAPI Inference Server
 
 This repository provides a minimal FastAPI server to deploy your trained ViT model for retina OCT disease classification.
@@ -62,7 +68,9 @@ Sample JSON response:
 
 ## Deploy
 
-This repo now includes:
+These deployment options are written for anyone using this repository (local users, collaborators, and public GitHub viewers).
+
+Deployment files included in this repository:
 - `Dockerfile` for container deployment
 - `.dockerignore` to keep images smaller
 - `Procfile` for PaaS platforms that use process files
@@ -101,6 +109,51 @@ Start command (already in `Procfile`):
 ```text
 web: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
 ```
+
+### Option C: Deploy to Hugging Face Spaces (Docker)
+
+This repo is already set up to include `my-trained-vit-model/` inside the Docker image.
+
+1. Create a new Space with **SDK = Docker**.
+2. At **Storage Bucket**, choose **Continue without bucket** (not required for this setup).
+3. In the Space repository, ensure `README.md` starts with this frontmatter:
+
+```yaml
+---
+title: Retina API
+sdk: docker
+app_port: 8000
+---
+```
+
+4. From your local repo, track large model files (one-time):
+
+```bash
+git lfs install
+git lfs track "*.safetensors"
+git add .gitattributes
+```
+
+5. Commit and push to your Space:
+
+```bash
+git add .
+git commit -m "Deploy Retina API to HF Space"
+git remote add hf https://huggingface.co/spaces/<your-username>/<your-space-name>
+git push hf main
+```
+
+6. In Space **Settings -> Variables**, optionally set:
+
+```text
+MODEL_DIR=/app/my-trained-vit-model
+```
+
+  The Docker image already sets this default, so this variable is optional.
+
+7. Wait for build to finish, then verify:
+  - `https://<your-space>.hf.space/health`
+  - `https://<your-space>.hf.space/`
 
 ### Deployment checklist
 
