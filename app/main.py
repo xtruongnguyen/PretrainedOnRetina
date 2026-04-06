@@ -4,6 +4,7 @@ import os
 import io
 
 import torch
+from huggingface_hub import snapshot_download
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse, HTMLResponse
 from PIL import Image
@@ -11,7 +12,27 @@ from transformers import AutoModelForImageClassification, AutoProcessor
 
 
 MODEL_DIR_ENV = "MODEL_DIR"
+HF_MODEL_ID_ENV = "HF_MODEL_ID"
+HF_MODEL_REVISION_ENV = "HF_MODEL_REVISION"
+HF_TOKEN_ENV = "HF_TOKEN"
 DEFAULT_MODEL_DIR = os.getenv(MODEL_DIR_ENV, "my-trained-vit-model")
+
+
+def resolve_model_dir(default_model_dir: str) -> str:
+    if os.path.isdir(default_model_dir):
+        return default_model_dir
+
+    hf_model_id = os.getenv(HF_MODEL_ID_ENV)
+    if not hf_model_id:
+        raise FileNotFoundError(
+            f"Model directory not found: {default_model_dir}. "
+            f"Set {MODEL_DIR_ENV} to a local model path or set {HF_MODEL_ID_ENV} "
+            "to a Hugging Face model repository (for example: username/model-repo)."
+        )
+
+    hf_token = os.getenv(HF_TOKEN_ENV)
+    hf_revision = os.getenv(HF_MODEL_REVISION_ENV)
+    return snapshot_download(repo_id=hf_model_id, revision=hf_revision, token=hf_token)
 
 
 def load_model_and_processor(model_dir: str):
@@ -51,7 +72,7 @@ app = FastAPI(title="Retina Disease Classification API", version="1.0.0")
 @app.on_event("startup")
 def _startup():
     global model, processor, id2label
-    model_dir = DEFAULT_MODEL_DIR
+    model_dir = resolve_model_dir(DEFAULT_MODEL_DIR)
     model, processor = load_model_and_processor(model_dir)
     id2label = get_id2label(model)
 
