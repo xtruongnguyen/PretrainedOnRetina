@@ -69,7 +69,9 @@ Sample JSON response:
 ```
 
 ## Notes
-- The server reads `MODEL_DIR` env var; defaults to `my-trained-vit-model` in the repo root.
+- The server first tries `MODEL_DIR` (defaults to `my-trained-vit-model` in the repo root).
+- If that local path does not exist and `HF_MODEL_ID` is set, the server downloads model artifacts from that Hugging Face model repository at startup.
+- For private model repositories, set `HF_TOKEN`.
 - CPU inference by default. If you want GPU, move tensors to CUDA and ensure PyTorch with CUDA is installed.
 
 ## Deploy
@@ -107,7 +109,10 @@ docker run --rm -p 8000:8000 -e MODEL_DIR=/models/my-trained-vit-model -v ${PWD}
 ### Option B: Deploy to PaaS (Render/Railway/Heroku-like)
 
 Use these environment variables:
-- `MODEL_DIR` (required): absolute or app-relative path to model artifacts
+- `MODEL_DIR` (optional): absolute or app-relative local path to model artifacts
+- `HF_MODEL_ID` (recommended): Hugging Face model repo id such as `xtn11/pretrained-on-retina-model`
+- `HF_MODEL_REVISION` (optional): branch/tag/commit from model repo
+- `HF_TOKEN` (optional): required only for private model repos
 - `PORT` (provided by most platforms)
 
 Start command (already in `Procfile`):
@@ -118,29 +123,36 @@ web: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
 
 ### Option C: Deploy to Hugging Face Spaces (Docker)
 
-This repo is already set up to include `my-trained-vit-model/` inside the Docker image.
+Recommended setup: keep this app code in your Space repo and keep model weights in a separate Hugging Face **Model** repo.
 
-1. Create a new Space with **SDK = Docker**.
-2. At **Storage Bucket**, choose **Continue without bucket** (not required for this setup).
-3. In the Space repository, ensure `README.md` starts with this frontmatter:
+1. Create a Hugging Face **Model** repository (example: `xtn11/pretrained-on-retina-model`).
+2. Upload model files to that model repo:
+  - `config.json`
+  - `model.safetensors`
+  - `preprocessor_config.json`
+3. Create a new Space with **SDK = Docker**.
+4. At **Storage Bucket**, choose **Continue without bucket** (not required for this setup).
+5. In the Space repository, ensure `README.md` starts with this frontmatter:
 
 ```yaml
 ---
-title: Retina API
+title: PretrainedOnRetina
 sdk: docker
 app_port: 8000
 ---
 ```
 
-4. From your local repo, track large model files (one-time):
+6. In Space **Settings -> Variables**, set:
 
-```bash
-git lfs install
-git lfs track "*.safetensors"
-git add .gitattributes
+```text
+HF_MODEL_ID=xtn11/pretrained-on-retina-model
 ```
 
-5. Commit and push to your Space:
+Optional variables:
+- `HF_MODEL_REVISION` (pin a specific model version)
+- `HF_TOKEN` (only if the model repo is private)
+
+7. Commit and push this app code to your Space:
 
 ```bash
 git add .
@@ -149,21 +161,15 @@ git remote add hf https://huggingface.co/spaces/<your-username>/<your-space-name
 git push hf main
 ```
 
-6. In Space **Settings -> Variables**, optionally set:
-
-```text
-MODEL_DIR=/app/my-trained-vit-model
-```
-
-  The Docker image already sets this default, so this variable is optional.
-
-7. Wait for build to finish, then verify:
+8. Wait for build to finish, then verify:
   - `https://<your-space>.hf.space/health`
   - `https://<your-space>.hf.space/`
 
 ### Deployment checklist
 
-- Upload or mount your trained model directory so the API can read it.
-- Set `MODEL_DIR` to that path.
+- Choose one model source:
+  - local path via `MODEL_DIR`, or
+  - Hugging Face model repo via `HF_MODEL_ID`
+- Set `HF_TOKEN` only if your model repo is private.
 - Expose port `8000` locally, or use platform `PORT` in cloud deployment.
 - Verify health at `/health` after deploy.
