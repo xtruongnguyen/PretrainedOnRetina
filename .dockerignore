@@ -11,4 +11,8 @@ venv/
 .env.*
 *.log
 
-# Keep trained model artifacts in build context for Hugging Face Spaces deployment.
+# Keep image builds lightweight; load model weights from Hugging Face at runtime.
+*.pt
+*.bin
+*.safetensors
+my-trained-vit-model/
